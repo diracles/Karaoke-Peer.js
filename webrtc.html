@@ -1,0 +1,137 @@
+<html>
+	<head>
+		<script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+
+		<script type="text/javascript">
+			
+			var init = function() {
+
+				/* Get User Media */
+				var my_stream = null;
+				
+				window.URL = window.URL || window.webkitURL || window.mozURL || window.msURL;
+				navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+				if (navigator.getUserMedia) {
+					navigator.getUserMedia({audio: true}, function(stream) {
+								my_stream = stream;
+								var audioElement = document.getElementById('myaudio');
+								audioElement.src = window.URL.createObjectURL(stream) || stream;
+								audioElement.play();
+							}, function(err) {
+								console.log('Failed to get local stream' ,err);
+					});
+				}
+
+		
+				/* My WebRTC peer id */
+				var peer_id = null;	
+				 var myName = null;
+				  var user_info_div;		
+			
+				/* Socket Server - Socket.io */
+				var socket = io.connect('http://ec2-54-200-30-241.us-west-2.compute.amazonaws.com:7070/', {'sync disconnect on unload': true });
+
+
+
+			
+				socket.on('connect', function() {
+					console.log("Connected");
+				
+				});
+
+
+
+
+				// Receive other folks peer ids
+				//this could be "everybody" function/ variable
+
+				socket.on('peer_id', function (data) {
+					// console.log("Got a new peer: " + data);
+
+					console.log(data);
+
+
+					var div = document.createElement ('div');
+
+					for (var p = 0; p < data.length; p++){
+						console.log(data[p].Name);
+					}
+
+					var myDiv = document.createElement('div');
+					myDiv.className = "itpClass";
+
+					myDiv.innerHTML = "<span class= 'username'>"+data[p].Name;
+
+					div.appendChild(myDiv);
+				
+
+				if(!div.hasChildNodes()){
+
+					document.getElementById("workers").appendChild(text);
+				}
+
+						// When we connect, if we have a peer_id, send it out	
+					// if (peer_id != null) {
+					// 	console.log("peer id is not null, sending it");
+					// 	//socket.emit("peer_id",peer_id);
+					socket.emit("peer_id", { Name: myName} );
+
+
+
+				
+					// Call them with our stream
+					console.log("Calling peer: " + data);						
+					var call = peer.call(data, my_stream);
+
+					call.on('stream', function(remoteStream) {
+						console.log("Got remote stream");
+						//if its my turn then broadcast to pumpkin/everyone else
+						var oaudioElement = document.createElement('audio');
+						oaudioElement.src = window.URL.createObjectURL(remoteStream) || remoteStream;
+						document.body.appendChild(oaudioElement);
+						oaudioElement.controls=true;
+						oaudioElement.play();
+					});
+				});
+				//end of data function
+
+			
+				var peer = new Peer({key: 'sr1apomrk7kqpvi'});
+
+				// Get an ID from the PeerJS server		
+				peer.on('open', function(id) {
+				  console.log('My peer ID is: ' + id);
+				  peer_id = id;
+			  
+				  // If our socket is connected, send out our peer id here
+				  //if (socket.connected) {
+					console.log("sending out our peer id");
+					socket.emit("peer_id", { Name: myName} );
+				  //}
+				});		
+		
+				
+				peer.on('call', function(incoming_call) {
+					console.log("Got a call!");
+					incoming_call.answer(my_stream); // Answer the call with an A/V stream.
+					incoming_call.on('stream', function(remoteStream) {
+						//this is the part that generates another audio tag
+						var oaudioElement = document.createElement('audio');
+						oaudioElement.src = window.URL.createObjectURL(remoteStream) || remoteStream;
+						document.body.appendChild(oaudioElement);
+						oaudioElement.controls=true;
+						oaudioElement.play();
+					});
+				});			
+			};
+		
+		</script>
+	</head>
+	<body onload="init()">
+		<audio id="myaudio" controls muted></audio>
+		<div id="user_info"></div>
+   <input type="text" id="name" width="10" value = "Please enter your name" />
+   ->   <div id="workers"></div>
+	</body>
+</html>
