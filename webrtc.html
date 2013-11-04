@@ -18,12 +18,8 @@
 								var audioElement = document.getElementById('myaudio');
 								audioElement.src = window.URL.createObjectURL(stream) || stream;
 								audioElement.play();
-							}, function(err) {
-								console.log('Failed to get local stream' ,err);
-					});
-				}
+								console.log("my_stream is created");
 
-		
 				/* My WebRTC peer id */
 				var peer_id = null;	
 				 var myName = null;
@@ -43,42 +39,10 @@
 
 
 
-				// Receive other folks peer ids
-				//this could be "everybody" function/ variable
+				// Receive other folks peer ids, broadcast
 
 				socket.on('peer_id', function (data) {
-					// console.log("Got a new peer: " + data);
-
-					console.log(data);
-
-
-					var div = document.createElement ('div');
-
-					for (var p = 0; p < data.length; p++){
-						console.log(data[p].Name);
-					}
-
-					var myDiv = document.createElement('div');
-					myDiv.className = "itpClass";
-
-					myDiv.innerHTML = "<span class= 'username'>"+data[p].Name;
-
-					div.appendChild(myDiv);
-				
-
-				if(!div.hasChildNodes()){
-
-					document.getElementById("workers").appendChild(text);
-				}
-
-						// When we connect, if we have a peer_id, send it out	
-					// if (peer_id != null) {
-					// 	console.log("peer id is not null, sending it");
-					// 	//socket.emit("peer_id",peer_id);
-					socket.emit("peer_id", { Name: myName} );
-
-
-
+					console.log("Got a new peer: " + data);
 				
 					// Call them with our stream
 					console.log("Calling peer: " + data);						
@@ -92,12 +56,17 @@
 						document.body.appendChild(oaudioElement);
 						oaudioElement.controls=true;
 						oaudioElement.play();
+						console.log("If my turn, broadcast");
 					});
 				});
 				//end of data function
 
 			
-				var peer = new Peer({key: 'sr1apomrk7kqpvi'});
+				//var peer = new Peer({key: 'sr1apomrk7kqpvi'});
+				var peer = new Peer({
+  				host: 'drake.itp.tsoa.nyu.edu',
+  				port: 9000
+				});
 
 				// Get an ID from the PeerJS server		
 				peer.on('open', function(id) {
@@ -107,7 +76,7 @@
 				  // If our socket is connected, send out our peer id here
 				  //if (socket.connected) {
 					console.log("sending out our peer id");
-					socket.emit("peer_id", { Name: myName} );
+					socket.emit("peer_id", peer_id );
 				  //}
 				});		
 		
@@ -122,8 +91,30 @@
 						document.body.appendChild(oaudioElement);
 						oaudioElement.controls=true;
 						oaudioElement.play();
+						console.log("my_stream received call from another stream");
 					});
-				});			
+				});	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							}, function(err) {
+								console.log('Failed to get local stream' ,err);
+					});
+				}
+
+		
+
 			};
 		
 		</script>
@@ -131,7 +122,6 @@
 	<body onload="init()">
 		<audio id="myaudio" controls muted></audio>
 		<div id="user_info"></div>
-   <input type="text" id="name" width="10" value = "Please enter your name" />
-   ->   <div id="workers"></div>
+  <div id="workers"></div>
 	</body>
 </html>
